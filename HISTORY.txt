@@ -1,0 +1,32 @@
+Pypctools Change History
+
+v1.0 (Sep 25, 2019)
+    Initial release (actually, it was a few months back, but this was the first stable release)
+
+v1.1 (Dec 5, 2019)
+    Added function "read_index" in module "Txts.py"
+
+v1.2 (Jan 10, 2020)
+    Added __version__ in setup.py and __init__.py;
+    Fixed bug in labeltodate with Week label. Funtion now matches with IBox
+
+v1.3 (Feb 12, 2020)
+    Added function "read_pricing_tvm" in module "Txts.py";
+    "fct2rate" function now returns rate 0 when the term is 0, instead of nan.
+
+v1.4 (Feb 20, 2020)
+    Added equity indices (IBOV, CAC, DAX etc.) to function "read_index" in module "Txts.py";
+    XML Calendars replaced by IBox's, with more accurate holidays.
+
+v1.5 (Apr 27, 2020)
+    Txt loading functions can now accept fname argument with space separator in addition to
+     underline ('_') separator. e.g: pct.load_pricing_vertices('ON BRL IPCA NTNB YIELD', date)
+
+
+
+TODO: PRIORITY: FIX FCT2RATE CONVERSION IN Curve's __init__ method (self.rates can be NaN)!!! [Done in v1.3, needs review though]
+TODO: Make Label class interchangeable with str class. This is good esp. when working with dataframes/series
+TODO: Check BVSP Calendar for date Dec 24, 2019. Should be a holiday. Tests for calendars, use IBOX calendars [Done!]
+TODO: ADD some kind of function like 'display_options()' to show calendars and other options
+TODO: find a way to show MIN/MAX holidays available for each calendar
+
