@@ -1,0 +1,152 @@
+Option Explicit
+
+' Default page tydier
+Sub tidyGraphs(bookName As String, sheetName As String)
+    
+    Dim startSheet As String
+    Dim rateMax As Double
+    Dim rateMin As Double
+    Dim nBlocks As Integer
+    Dim blockSize As Double
+    
+    startSheet = Workbooks(bookName).ActiveSheet.Name
+    
+    Application.CalculateFullRebuild
+    Workbooks(bookName).Worksheets(sheetName).Activate
+    rateMax = getChartMax(bookName, sheetName, "Chart 2")
+    rateMin = getChartMin(bookName, sheetName, "Chart 2")
+    Call setChartMax(bookName, sheetName, "Chart 2", rateMax)
+    Call setChartMin(bookName, sheetName, "Chart 2", rateMin)
+    nBlocks = equalizeChart(bookName, sheetName, "Chart 1")
+    blockSize = WorksheetFunction.RoundUp((rateMax - rateMin) / nBlocks * 1000, 0) / 1000
+    Call setChartMax(bookName, sheetName, "Chart 1", rateMin + nBlocks * blockSize, True)
+    Call setChartMin(bookName, sheetName, "Chart 1", rateMin, True)
+    Call equalizeChart(bookName, sheetName, "Chart 3")
+    Call equalizeChart(bookName, sheetName, "Chart 4")
+    Call equalizeChart(bookName, sheetName, "Chart 4", True)
+    Workbooks(bookName).Worksheets(startSheet).Activate
+    
+End Sub
+
+' Set the minimum of a chart
+Sub setChartMin(planiha As String, aba As String, chartName As String, size As Double, Optional secondary As Boolean = False)
+    
+    Dim axisNumber As Long
+    
+    ' Selects if the axis to be defined is the first or the second
+    If secondary Then
+        axisNumber = xlSecondary
+    Else
+        axisNumber = xlPrimary
+    End If
+    
+    ' Change axis minimum
+    Workbooks(planiha).Worksheets(aba).ChartObjects(chartName).Activate
+    ActiveChart.Axes(xlValue, axisNumber).MinimumScale = size
+    Workbooks(planiha).Worksheets(aba).Range("A1").Select
+    
+End Sub
+
+' Set the minimum of a chart
+Sub setChartMax(planiha As String, aba As String, chartName As String, size As Double, Optional secondary As Boolean = False)
+    
+    Dim axisNumber As Long
+    
+    ' Selects if the axis to be defined is the first or the second
+    If secondary Then
+        axisNumber = xlSecondary
+    Else
+        axisNumber = xlPrimary
+    End If
+    
+    ' Change axis maximum
+    Workbooks(planiha).Worksheets(aba).ChartObjects(chartName).Activate
+    ActiveChart.Axes(xlValue, axisNumber).MaximumScale = size
+    Workbooks(planiha).Worksheets(aba).Range("A1").Select
+    
+End Sub
+
+' Makes both the maximun and minimum of a chart to be the same, using the automatic setting
+Function equalizeChart(planiha As String, aba As String, chartName As String, Optional secondary As Boolean = False) As Integer
+    
+    Dim axisNumber As Long
+    Dim axisSize As Double
+    
+    ' Selects if the axis to be defined is the first or the second
+    If secondary Then
+        axisNumber = xlSecondary
+    Else
+        axisNumber = xlPrimary
+    End If
+    
+    ' Set values to automatic, finds out the biggest one and sets it
+    Workbooks(planiha).Worksheets(aba).ChartObjects(chartName).Activate
+    ActiveChart.Axes(xlValue, axisNumber).MaximumScaleIsAuto = True
+    ActiveChart.Axes(xlValue, axisNumber).MinimumScaleIsAuto = True
+    axisSize = WorksheetFunction.Max(Abs(ActiveChart.Axes(xlValue, axisNumber).MinimumScale), Abs(ActiveChart.Axes(xlValue, axisNumber).MaximumScale))
+    ActiveChart.Axes(xlValue, axisNumber).MinimumScale = -axisSize
+    ActiveChart.Axes(xlValue, axisNumber).MaximumScale = axisSize
+    
+    ' Returns the size of each division of the chart
+    equalizeChart = 2 * axisSize / ActiveChart.Axes(xlValue, xlPrimary).MajorUnit
+    Workbooks(planiha).Worksheets(aba).Range("A1").Select
+    
+End Function
+
+' Returns the maximum point of a graph
+Function getChartMax(planiha As String, aba As String, chartName As String) As Double
+    
+    Dim i As Long
+    Dim j As Long
+    Dim values As Variant
+    
+    Workbooks(planiha).Worksheets(aba).ChartObjects(chartName).Activate
+    
+    ' Go one by one checking which one is the biggest
+    getChartMax = -1E+24
+    For i = 1 To ActiveChart.SeriesCollection.Count
+        values = ActiveChart.SeriesCollection(i).values
+        For j = 1 To ActiveChart.SeriesCollection(i).Points.Count
+            If getChartMax < values(j) Then getChartMax = values(j)
+        Next
+    Next
+    
+    ' Returns the rounded value on the 0.01
+    If getChartMax > 0 Then
+        getChartMax = WorksheetFunction.RoundUp(getChartMax * 1000, 0) / 1000
+    Else
+        getChartMax = WorksheetFunction.RoundDown(getChartMax * 1000, 0) / 1000
+    End If
+    
+    Workbooks(planiha).Worksheets(aba).Range("A1").Select
+    
+End Function
+
+' Returns the minimum point of a graph
+Function getChartMin(planiha As String, aba As String, chartName As String) As Double
+    
+    Dim i As Long
+    Dim j As Long
+    Dim values As Variant
+    
+    Workbooks(planiha).Worksheets(aba).ChartObjects(chartName).Activate
+    
+    ' Go one by one checking which one is the smallest
+    getChartMin = 1E+24
+    For i = 1 To ActiveChart.SeriesCollection.Count
+        values = ActiveChart.SeriesCollection(i).values
+        For j = 1 To ActiveChart.SeriesCollection(i).Points.Count
+            If getChartMin > values(j) Then getChartMin = values(j)
+        Next
+    Next
+    
+    ' Returns the rounded value on the 0.01
+    If getChartMin > 0 Then
+        getChartMin = WorksheetFunction.RoundDown(getChartMin * 1000, 0) / 1000
+    Else
+        getChartMin = WorksheetFunction.RoundUp(getChartMin * 1000, 0) / 1000
+    End If
+    
+    Workbooks(planiha).Worksheets(aba).Range("A1").Select
+    
+End Function
